@@ -36,10 +36,11 @@ class JobApplication:
         self.job_description = job_description
     
     def __str__(self) -> str:
-        return f"Applied to {self.role} at {self.company} on {self.apply_date}"
+        return f"Application for {self.role} at {self.company} on {self.apply_date}"
     
     def details(self) -> None:
-        print(f"""company: {self.company}
+        print(f"""
+              company: {self.company}
               role: {self.role}
               status: {self.status.value}
               application-date: {self.apply_date}
@@ -96,7 +97,7 @@ def track_job():
     
     print("Application Saved!\n")
 
-def view_job():
+def view_job() -> None:
     if not applications:
         print("There is no applications yet, add some now!\n")
         return
@@ -117,8 +118,60 @@ def view_job():
             
     applications[job_num].details()
 
-
-
+def find_job() -> None:
+    if not applications:
+        print("There is no applications yet, add some now!\n")
+        return
+    
+    target_input = input("Please type in the name of the company you are looking for: \n")
+    target = target_input.strip().lower()
+    result = []
+    for application in applications:
+        if target in application.company.lower():
+            result.append(application)
+    
+    if not result:
+        print(f"There are no applications for a company named {target_input}\n")
+        return
+    
+    for i, job in enumerate(result, start=1):
+        print(f"{i}, {job}")
+    
+    while True:
+        try:
+            job_num = int(input("Which job would you like to see? Type in the corresponding number to view the job.")) - 1
+            
+            if 0 <= job_num <len(result):
+                break
+            
+            print("choose a numeber from the list\n")
+        except ValueError:
+            print("Please choose a number\n")
+            
+    result[job_num].details()
+    
+def delete_job() -> None:
+    if not applications:
+        print("There is no applications yet, add some now!\n")
+        return
+    
+    for i, job in enumerate(applications, start=1):
+        print(f"{i}, {job}")
+    
+    while True:
+        try:
+            job_num = int(input("Which job would you like to delete? Type in the corresponding number to delete the job.")) - 1
+            
+            if 0 <= job_num <len(applications):
+                break
+            
+            print("choose a numeber from the list\n")
+        except ValueError:
+            print("Please choose a number\n")
+            
+    removed = applications.pop(job_num)
+    print(f"{removed} is deleted\n")
+    
 def main():
     while True:
         try:
@@ -127,7 +180,9 @@ def main():
                 
                 1. Add application
                 2. View applications
-                3. Exit
+                3. Find applications
+                4. Delete applications
+                5. Exit
                 
                 Choose a number: \n"""
             ))
@@ -137,10 +192,14 @@ def main():
             elif action == 2:
                 view_job()
             elif action == 3:
+                find_job()
+            elif action == 4:    
+                delete_job()
+            elif action == 5:
                 print("Goodbye!")
                 sys.exit()
             else:    
-                print("Choose a number between 1 and 3\n")
+                print("Choose a number between 1 and 5\n")
             
         except ValueError:
             print("Choose a number, not text\n")
