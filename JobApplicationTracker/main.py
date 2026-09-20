@@ -1,6 +1,9 @@
 import datetime
 from enum import Enum
 import sys
+from fastapi import FastAPI
+from pydantic import BaseModel
+    
 
 class ApplicationStatus(Enum):
     APPLIED = "Applied"
@@ -50,8 +53,59 @@ class JobApplication:
               job_description: {self.job_description}
               """
               )
+    
+    def to_dict(self) -> dict:
+        return {
+            "company": self.company,
+            "role": self.role,
+            "status": self.status.value,
+            "apply_date": self.apply_date.isoformat(),
+            "job_url": self.job_url,
+            "location": self.location,
+            "pay": self.pay,
+            "job_description": self.job_description
+        }
+
+class ApplicationCreate(BaseModel):
+    company: str
+    role: str
+    status: ApplicationStatus
+    apply_date: datetime.date | None = None
+    job_url: str | None = None
+    location: str | None = None
+    pay: str | None = None
+    job_description: str | None = None
 
 applications = []
+
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"message": "Job Tracker API is running"}
+
+@app.get("/applications")
+def get_applications():
+    return [job.to_dict() for job in applications]
+    # same as result = []
+    # for job in application: 
+        # result.append(job.to_dict()) 
+        # return result
+        
+@app.post("/applications")
+def post_applications(application:ApplicationCreate):
+    
+    new_job = JobApplication(company=application.company,
+                             role=application.role,
+                             status=application.status,
+                             apply_date=application.apply_date,
+                             job_url=application.job_url,
+                             location=application.location,
+                             pay=application.pay,
+                             job_description=application.job_description)
+    
+    applications.append(new_job)
+    return new_job.to_dict()
 
 def track_job():
     print("Please type in your application details!")
@@ -205,4 +259,5 @@ def main():
             print("Choose a number, not text\n")
     
 
-main()
+if __name__ == "__main__":
+    main()
