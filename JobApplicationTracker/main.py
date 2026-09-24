@@ -1,7 +1,7 @@
 import datetime
 from enum import Enum
 import sys
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
     
 
@@ -14,9 +14,12 @@ class ApplicationStatus(Enum):
     OFFER = "Offer"
     
 class JobApplication:
+    next_application_id = 1
+    
     def __init__(self,
                  company:str,
                  role:str,
+                 id:int|None = None,
                  status:ApplicationStatus = ApplicationStatus.APPLIED,
                  apply_date:datetime.date|None = None,
                  job_url:str|None = None,
@@ -29,7 +32,13 @@ class JobApplication:
             self.apply_date = datetime.date.today()
         else:    
             self.apply_date = apply_date
-        
+            
+        if id is None:
+            self.id = JobApplication.next_application_id
+            JobApplication.next_application_id += 1
+        else:
+            self.id = id
+            
         self.company = company
         self.role = role
         self.status = status
@@ -43,6 +52,7 @@ class JobApplication:
     
     def details(self) -> None:
         print(f"""
+              id: {self.id}
               company: {self.company}
               role: {self.role}
               status: {self.status.value}
@@ -56,6 +66,7 @@ class JobApplication:
     
     def to_dict(self) -> dict:
         return {
+            "id": self.id,
             "company": self.company,
             "role": self.role,
             "status": self.status.value,
@@ -91,6 +102,20 @@ def get_applications():
     # for job in application: 
         # result.append(job.to_dict()) 
         # return result
+        
+@app.get("/applications/{application_id}")
+def get_specific_application(application_id:int):
+
+    for application in applications:
+        if application.id == application_id:
+            return application.to_dict()
+
+    raise HTTPException(
+        status_code=404,
+        detail = "No application associated with this id"
+    )
+    
+    
         
 @app.post("/applications")
 def post_applications(application:ApplicationCreate):
